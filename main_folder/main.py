@@ -31,14 +31,28 @@ keyboards = {'login': [True,
                            ['Vladito', 'POSITIVE'],
                            'Line',
                            ['Выход', 'NEGATIVE']],
-             'edu': [False, ['Среднее общее образование', 'DEFAULT'], 'Line',
-                     ['Среднее профессиональное образование', 'DEFAULT'], 'Line',
-                     ['Высшее образование', 'PRIMARY'], 'Line',
-                     ['Высшее профессиональное образование', 'POSITIVE']],
-             'job': [False, ['Грузчик', 'PRIMARY'], 'Line', ['Сварщик', 'PRIMARY'], 'Line', ['Банкир', 'PRIMARY'],
-                     'Line', ['Депутат', 'PRIMARY'], 'Line', [
-                         'Программист',
-                         'PRIMARY']],
+             'edu': [False,
+                     ['Среднее общее образование', 'DEFAULT'],
+                     'Line',
+                     ['Среднее профессиональное образование', 'DEFAULT'],
+                     'Line',
+                     ['Высшее образование', 'PRIMARY'],
+                     'Line',
+                     ['Высшее профессиональное образование', 'POSITIVE'],
+                     'Line',
+                     ['Вернуться назад', 'NEGATIVE']],
+             'job': [False,
+                     ['Грузчик', 'PRIMARY'],
+                     'Line',
+                     ['Сварщик', 'PRIMARY'],
+                     'Line',
+                     ['Банкир', 'PRIMARY'],
+                     'Line',
+                     ['Депутат', 'PRIMARY'],
+                     'Line',
+                     ['Программист', 'PRIMARY'],
+                     'Line',
+                     ['Вернуться назад', 'NEGATIVE']],
              'Отмена регистрации': [False,
                                     ['Отмена', 'NEGATIVE']]}
 
@@ -306,32 +320,31 @@ def job(id, user_id):
     educ = session.query(User).filter(User.id == user_id).first()
     educ = educ.education
     print(123)
-    vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+    vk.messages.send(user_id=id, message="Кем хотите работать?", keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             user = session.query(User).filter(User.id == user_id).first()
             response = event.obj.message['text']
             if educ == 'Высшее профессиональное образование' and response == 'Программист':
                 user.zarplata = 500000
-                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+                return game_process(user_id, id)
             elif educ == 'Основное общее образование' and response == 'Грузчик':
                 user.zarplata = 20000
-                print(1)
-                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-            elif educ == 'Среднее общее образование' and response == 'Сварщик':
-                user.zarplata = 80000
-                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-            elif educ == 'Среднее профессиональное образование' and response == 'Банкир':
+                return game_process(user_id, id)
+            elif educ == 'Среднее общее образование' and response == 'Банкир':
+                user.zarplata = 50000
+                return game_process(user_id, id)
+            elif educ == 'Среднее профессиональное образование' and response == 'Сварщик':
                 user.zarplata = 100000
-                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+                return game_process(user_id, id)
             elif educ == 'Высшее образование' and response == 'Депутат':
                 user.zarplata = 300000
-                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                return game_process(user_id, id)
+            elif response == 'Вернуться назад':
+                return game_process(user_id, id)
+            else:
+                vk.messages.send(user_id=id, message="Вы не можете им работать, либо такой команды нет.", keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
 
 
@@ -344,13 +357,19 @@ def education(id, user_id):
         if event.type == VkBotEventType.MESSAGE_NEW:
             response = event.obj.message['text']
             if response == 'Среднее общее образование' and educ == 'Основное общее образование':
-                test1()
+                if test1():
+                    pass
             elif response == 'Среднее профессиональное образование' and educ == 'Среднее общее образование':
-                test2()
+                if test2():
+                    pass
             elif response == 'Высшее образование' and educ == 'Среднее профессиональное образование':
-                test3()
+                if test3():
+                    pass
             elif response == 'Высшее профессиональное образование' and educ == 'Высшее образование':
-                test4()
+                if test4():
+                    pass
+            elif response == 'Вернуться назад':
+                return game_process(user_id, id)
             else:
                 vk.messages.send(user_id=id, message="Такой команды не существует", keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
@@ -359,7 +378,7 @@ def education(id, user_id):
 def game_process(user_id, id):
     vk = vk_session.get_api()
     keyboard = create_keyboard('main_menu')
-    vk.messages.send(user_id=id, message="Приветствуем тебя в нашей игре!", keyboard=keyboard,
+    vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
