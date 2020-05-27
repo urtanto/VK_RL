@@ -212,6 +212,7 @@ def register(id):
     user.money = 100
     user.zarplata = 0
     user.profession = 'no'
+    user.enter = True
     session.add(user)
     session.commit()
     return enter(id)
@@ -225,6 +226,10 @@ def main(*func):
                          keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
     elif func[0] == 0:
         print('Robit')
+    elif func[0] == -1:
+        keyboard = create_keyboard('login')
+        vk.messages.send(user_id=func[1], message="Привет",
+                         keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             print('Новое сообщение:')
@@ -264,7 +269,6 @@ def game_process(user_id, id):
             if message == 'Обо мне':
                 session = db_session.create_session()
                 user = session.query(User).filter(User.id == user_id).first()
-                user = session.query(User).filter(User.id == user_id).first()
                 work = user.profession
                 if work == 'no':
                     work = 'никем'
@@ -274,6 +278,9 @@ def game_process(user_id, id):
                                          f"\nВы работаете {work} и получаете {user.zarplata} рублей",
                                  keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
+            elif message == 'Выход':
+                user.enter = False
+                return main(-1)
 
 
 if __name__ == '__main__':
