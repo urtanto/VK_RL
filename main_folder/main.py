@@ -102,6 +102,7 @@ def enter(id):
                 password = event.obj.message['text']
                 if password == user.password:
                     user.enter = 'True'
+                    session.commit()
                     return game_process(user.id, id)
                 elif password == 'Зарегистрироваться':
                     return register(id)
@@ -283,7 +284,8 @@ def game_process(user_id, id):
                 session = db_session.create_session()
                 user = session.query(User).filter(User.id == user_id).first()
                 user.enter = 'False'
-                return main(-1)
+                session.commit()
+                return main(-1, id)
 
 
 if __name__ == '__main__':
