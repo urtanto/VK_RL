@@ -13,3 +13,4 @@ class User(SqlAlchemyBase, UserMixin):
     enter = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     email = sqlalchemy.Column(sqlalchemy.String,
                               index=True, unique=True, nullable=True)
+    password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
