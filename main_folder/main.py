@@ -224,8 +224,12 @@ def register(id):
     user.password = password
     user.money = 100
     user.zarplata = 0
+    user.home = 'False'
+    user.cars = 'False'
+    user.garage = 'False'
+    user.education = 'False'
     user.profession = 'no'
-    user.enter = True
+    user.enter = 'True'
     user.vk = id
     session.add(user)
     session.commit()
@@ -304,7 +308,8 @@ def game_process(user_id, id):
                 session.commit()
                 return main(-1, id)
             else:
-                vk.messages.send(user_id=event.obj.message['from_id'], message="Такой команды пока нет, попробуй снова.",
+                vk.messages.send(user_id=event.obj.message['from_id'],
+                                 message="Такой команды пока нет, попробуй снова.",
                                  random_id=random.randint(0, 2 ** 64))
 
 
