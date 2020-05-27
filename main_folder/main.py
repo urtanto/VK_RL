@@ -1,5 +1,5 @@
 from smtplib import SMTP
-
+import datetime
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
@@ -120,10 +120,28 @@ def create_empty_keyboard():
     # Эта функция используется для закрытия клавиатуры
 
 
+def money_earn(id):
+    session = db_session.create_session()
+    user = session.query(User).filter(User.vk == id).first()
+    a = user.last_date
+    bb = datetime.date.today()
+    a = a.split('-')
+    aa = datetime.date(int(a[0]), int(a[1]), int(a[2]))
+    cc = bb - aa
+    dd = str(cc)
+    if ':' in dd.split()[0]:
+        pass
+    else:
+        user.money += user.zarplata * int(dd.split()[0])
+        user.last_date = str(datetime.date.today())
+        session.commit()
+
+
 def enter(id):
     session = db_session.create_session()
     user = session.query(User).filter(User.vk == id).first()
     if user.enter == 'True':
+        money_earn(id)
         game_process(user.id, id)
     else:
         keyboard = create_keyboard('вход')
@@ -150,6 +168,7 @@ def enter(id):
                 if password == user.password:
                     user.enter = 'True'
                     session.commit()
+                    money_earn(id)
                     return game_process(user.id, id)
                 elif password == 'Зарегистрироваться':
                     return register(id)

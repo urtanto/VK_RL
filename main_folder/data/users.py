@@ -22,3 +22,4 @@ class User(SqlAlchemyBase, UserMixin):
     garage = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     cars = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     education = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    last_date = sqlalchemy.Column(sqlalchemy.String, nullable=True)
