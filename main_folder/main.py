@@ -130,7 +130,7 @@ def money_earn(id):
     cc = bb - aa
     dd = str(cc)
     if ':' in dd.split()[0]:
-        pass
+        return
     else:
         user.money += user.zarplata * int(dd.split()[0])
         user.last_date = str(datetime.date.today())
