@@ -18,3 +18,7 @@ class User(SqlAlchemyBase, UserMixin):
     money = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     profession = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     zarplata = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    home = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    garage = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    cars = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    education = sqlalchemy.Column(sqlalchemy.String, nullable=True)

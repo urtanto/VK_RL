@@ -18,7 +18,18 @@ keyboards = {'login': [True,
                        ["Зарегистрироваться", 'DEFAULT']],
              'вход': [False,
                       ["Зарегистрироваться", 'DEFAULT']],
-             'main_menu': [False, ['Обо мне', 'DEFAULT'], 'Line', ['Выход', 'NEGATIVE']],
+             'main_menu': [False, ['Обо мне', 'DEFAULT'],
+                           ['Образование', 'DEFAULT'],
+                           ['Работа', 'DEFAULT'],
+                           'Line',
+                           ['Дом', 'PRIMARY'],
+                           ['Гараж', 'PRIMARY'],
+                           ['Машины', 'PRIMARY'],
+                           'Line',
+                           ['Kasino', 'POSITIVE'],
+                           ['Vladito', 'POSITIVE'],
+                           'Line',
+                           ['Выход', 'NEGATIVE']],
              'Отмена регистрации': [False,
                                     ['Отмена', 'NEGATIVE']]}
 
@@ -253,10 +264,9 @@ def main(*func):
                 elif response.lower() == "зарегистрироваться":
                     return register(event.obj.message['from_id'])
                 else:
-                    keyboard = create_keyboard('login')
-                    vk.messages.send(user_id=event.obj.message['from_id'], message="Привет", keyboard=keyboard,
+                    vk.messages.send(user_id=event.obj.message['from_id'], message="Такой команды нет, попробуй снова.",
                                      random_id=random.randint(0, 2 ** 64))
-                if event.obj.message['from_id'] in [463771138, 0] and response.lower() == 'ADMIN':
+                if event.obj.message['from_id'] in [463771138, 220401042] and response.lower() == 'ADMIN':
                     pass
 
 
@@ -272,12 +282,17 @@ def game_process(user_id, id):
                 session = db_session.create_session()
                 user = session.query(User).filter(User.id == user_id).first()
                 work = user.profession
+                cars = '\n'.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[0] == 'True' else 'нет'
                 if work == 'no':
                     work = 'никем'
                 vk.messages.send(user_id=id,
                                  message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}"
-                                         f"\nВаша почта: {user.email}\nУ вас {user.money} рублей"
-                                         f"\nВы работаете {work} и получаете {user.zarplata} рублей",
+                                         f"\nВаша почта: {user.email}\nУ вас: {user.money} рублей"
+                                         f"\nВы работаете: {work}\nВы получаете: {user.zarplata} рублей"
+                                         f"\nВаш дом: {user.home.split(';')[1] if user.home.split(';')[0] == 'True' else 'нет'}"
+                                         f"\nВаш гараж: {user.garage.split(';')[1] if user.garage.split(';')[0] == 'True' else 'нет'}"
+                                         f"\nВаши машины: {cars}"
+                                         f"\nВаше образование: {user.education.split(';')[1] if user.education.split(';')[0] == 'True' else 'нет'}}",
                                  keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
             elif message == 'Выход':
