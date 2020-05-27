@@ -75,7 +75,7 @@ def create_empty_keyboard():
 
 def enter(id):
     session = db_session.create_session()
-    user = session.query(User).filter(User.id == id).first()
+    user = session.query(User).filter(User.vk == id).first()
     if user.enter:
         game_process(user.id, id)
     else:
@@ -101,7 +101,7 @@ def enter(id):
             if event.type == VkBotEventType.MESSAGE_NEW:
                 password = event.obj.message['text']
                 if password == user.password:
-                    user.enter = True
+                    user.enter = 1
                     return game_process(user.id, id)
                 elif password == 'Зарегистрироваться':
                     return register(id)
@@ -213,6 +213,7 @@ def register(id):
     user.zarplata = 0
     user.profession = 'no'
     user.enter = True
+    user.vk = id
     session.add(user)
     session.commit()
     return enter(id)
@@ -279,7 +280,7 @@ def game_process(user_id, id):
                                  keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
             elif message == 'Выход':
-                user.enter = False
+                user.enter = 0
                 return main(-1)
 
 
