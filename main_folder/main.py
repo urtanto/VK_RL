@@ -17,7 +17,7 @@ keyboards = {'login': [True,
                        'Line',
                        ["Зарегистрироваться", 'DEFAULT']],
              'вход': [False, ["Зарегистрироваться", 'DEFAULT']],
-             'main_menu': [False, ['Обо мне', 'DEFAULT']],
+             'main_menu': [False, ['Обо мне', 'DEFAULT'], ['Мои деньги', 'DEFAULT']],
              'Отмена регистрации': [False, ['Отмена', 'NEGATIVE']]}
 
 
@@ -202,6 +202,9 @@ def register(id):
     user.surname = surname_in_game
     user.email = email
     user.password = password
+    user.money = 100
+    user.zarplata = 0
+    user.profession = 'no'
     session.add(user)
     session.commit()
     return enter(id)
@@ -254,7 +257,19 @@ def game_process(user_id, id):
             if message == 'Обо мне':
                 session = db_session.create_session()
                 user = session.query(User).filter(User.id == user_id).first()
-                vk.messages.send(user_id=id, message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}\nВаша почта: {user.email}", keyboard=keyboard,
+                vk.messages.send(user_id=id,
+                                 message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}\nВаша почта: {user.email}",
+                                 keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+            elif message == 'Мои деньги':
+                session = db_session.create_session()
+                user = session.query(User).filter(User.id == user_id).first()
+                work = user.profession
+                if work == 'no':
+                    work = 'никем'
+                vk.messages.send(user_id=id,
+                                 message=f"У вас {user.money} рублей\nВы работаете {work} и получаете {user.zarplata} рублей",
+                                 keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
 
 

@@ -14,3 +14,6 @@ class User(SqlAlchemyBase, UserMixin):
     email = sqlalchemy.Column(sqlalchemy.String,
                               index=True, unique=True, nullable=True)
     password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    money = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
+    profession = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    zarplata = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
