@@ -318,7 +318,7 @@ def job(id, user_id):
     session = db_session.create_session()
     keyboard = create_keyboard('job')
     educ = session.query(User).filter(User.id == user_id).first()
-    educ = educ.education
+    educ = educ.education.split(';')[1]
     print(123)
     vk.messages.send(user_id=id, message="Кем хотите работать?", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
@@ -328,23 +328,34 @@ def job(id, user_id):
             response = event.obj.message['text']
             if educ == 'Высшее профессиональное образование' and response == 'Программист':
                 user.zarplata = 500000
+                user.profession = 'True;Программист'
+                session.commit()
                 return game_process(user_id, id)
             elif educ == 'Основное общее образование' and response == 'Грузчик':
                 user.zarplata = 20000
+                user.profession = 'True;Грузчик'
+                session.commit()
                 return game_process(user_id, id)
             elif educ == 'Среднее общее образование' and response == 'Банкир':
                 user.zarplata = 50000
+                user.profession = 'True;Банкир'
+                session.commit()
                 return game_process(user_id, id)
             elif educ == 'Среднее профессиональное образование' and response == 'Сварщик':
                 user.zarplata = 100000
+                user.profession = 'True;Сварщик'
+                session.commit()
                 return game_process(user_id, id)
             elif educ == 'Высшее образование' and response == 'Депутат':
                 user.zarplata = 300000
+                user.profession = 'True;Депутат'
+                session.commit()
                 return game_process(user_id, id)
             elif response == 'Вернуться назад':
                 return game_process(user_id, id)
             else:
-                vk.messages.send(user_id=id, message="Вы не можете им работать, либо такой команды нет.", keyboard=keyboard,
+                vk.messages.send(user_id=id, message="Вы не можете им работать, либо такой команды нет.",
+                                 keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
 
 
@@ -386,15 +397,12 @@ def game_process(user_id, id):
             if message == 'Обо мне':
                 session = db_session.create_session()
                 user = session.query(User).filter(User.id == user_id).first()
-                work = user.profession
-                cars = '\n'.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[
+                cars = ', '.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[
                                                                                0] == 'True' else 'нет'
-                if work == 'no':
-                    work = 'никем'
                 vk.messages.send(user_id=id,
                                  message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}"
                                          f"\nВаша почта: {user.email}\nУ вас: {user.money} рублей"
-                                         f"\nВы работаете: {work}\nВы получаете: {user.zarplata} рублей"
+                                         f"\nВы работаете: {user.profession.split(';')[1] if user.profession.split(';')[0] == 'True' else 'никем'}\nВы получаете: {user.zarplata} рублей"
                                          f"\nВаш дом: {user.home.split(';')[1] if user.home.split(';')[0] == 'True' else 'нет'}"
                                          f"\nВаш гараж: {user.garage.split(';')[1] if user.garage.split(';')[0] == 'True' else 'нет'}"
                                          f"\nВаши машины: {cars}"
