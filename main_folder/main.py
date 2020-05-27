@@ -240,6 +240,9 @@ def main(*func):
                          keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
     elif func[0] == 0:
         print('Robit')
+        keyboard = create_keyboard('main_menu')
+        vk.messages.send(user_id=func[1], message="Привет",
+                         keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
     elif func[0] == -1:
         keyboard = create_keyboard('login')
         vk.messages.send(user_id=func[1], message="Привет",
