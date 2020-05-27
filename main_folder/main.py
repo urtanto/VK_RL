@@ -31,6 +31,14 @@ keyboards = {'login': [True,
                            ['Vladito', 'POSITIVE'],
                            'Line',
                            ['Выход', 'NEGATIVE']],
+             'edu': [False, ['Среднее общее образование', 'DEFAULT'], 'Line',
+                     ['Среднее профессиональное образование', 'DEFAULT'], 'Line',
+                     ['Высшее образование', 'PRIMARY'], 'Line',
+                     ['Высшее профессиональное образование', 'POSITIVE']],
+             'job': [False, ['Грузчик', 'PRIMARY'], 'Line', ['Сварщик', 'PRIMARY'], 'Line', ['Банкир', 'PRIMARY'],
+                     'Line', ['Депутат', 'PRIMARY'], 'Line', [
+                         'Программист',
+                         'PRIMARY']],
              'Отмена регистрации': [False,
                                     ['Отмена', 'NEGATIVE']]}
 
@@ -227,7 +235,7 @@ def register(id):
     user.home = 'False'
     user.cars = 'False'
     user.garage = 'False'
-    user.education = 'False'
+    user.education = 'Основное общее образование'
     user.profession = 'no'
     user.enter = 'True'
     user.vk = id
@@ -275,6 +283,79 @@ def main(*func):
                     pass
 
 
+def test1():
+    pass
+
+
+def test2():
+    pass
+
+
+def test3():
+    pass
+
+
+def test4():
+    pass
+
+
+def job(id, user_id):
+    vk = vk_session.get_api()
+    session = db_session.create_session()
+    keyboard = create_keyboard('job')
+    educ = session.query(User).filter(User.id == user_id).first()
+    educ = educ.education
+    print(123)
+    vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            user = session.query(User).filter(User.id == user_id).first()
+            response = event.obj.message['text']
+            if educ == 'Высшее профессиональное образование' and response == 'Программист':
+                user.zarplata = 500000
+                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+            elif educ == 'Основное общее образование' and response == 'Грузчик':
+                user.zarplata = 20000
+                print(1)
+                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+            elif educ == 'Среднее общее образование' and response == 'Сварщик':
+                user.zarplata = 80000
+                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+            elif educ == 'Среднее профессиональное образование' and response == 'Банкир':
+                user.zarplata = 100000
+                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+            elif educ == 'Высшее образование' and response == 'Депутат':
+                user.zarplata = 300000
+                vk.messages.send(user_id=id, message="РОбиТ", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+
+
+def education(id, user_id):
+    vk = vk_session.get_api()
+    session = db_session.create_session()
+    educ = session.query(User).filter(User.id == user_id).first().education
+    keyboard = create_keyboard('edu')
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            response = event.obj.message['text']
+            if response == 'Среднее общее образование' and educ == 'Основное общее образование':
+                test1()
+            elif response == 'Среднее профессиональное образование' and educ == 'Среднее общее образование':
+                test2()
+            elif response == 'Высшее образование' and educ == 'Среднее профессиональное образование':
+                test3()
+            elif response == 'Высшее профессиональное образование' and educ == 'Высшее образование':
+                test4()
+            else:
+                vk.messages.send(user_id=id, message="Такой команды не существует", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+
+
 def game_process(user_id, id):
     vk = vk_session.get_api()
     keyboard = create_keyboard('main_menu')
@@ -307,6 +388,10 @@ def game_process(user_id, id):
                 user.enter = 'False'
                 session.commit()
                 return main(-1, id)
+            elif message == 'Образование':
+                education(id, user_id)
+            elif message == 'Работа':
+                job(id, user_id)
             else:
                 vk.messages.send(user_id=event.obj.message['from_id'],
                                  message="Такой команды пока нет, попробуй снова.",
