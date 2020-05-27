@@ -302,6 +302,9 @@ def game_process(user_id, id):
                 user.enter = 'False'
                 session.commit()
                 return main(-1, id)
+            else:
+                vk.messages.send(user_id=event.obj.message['from_id'], message="Такой команды пока нет, попробуй снова.",
+                                 random_id=random.randint(0, 2 ** 64))
 
 
 if __name__ == '__main__':
