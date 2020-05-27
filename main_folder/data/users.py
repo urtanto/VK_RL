@@ -11,7 +11,7 @@ class User(SqlAlchemyBase, UserMixin):
     vk = sqlalchemy.Column(sqlalchemy.Integer, unique=True)
     surname = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    enter = sqlalchemy.Column(sqlalchemy.BOOLEAN, nullable=True)
+    enter = sqlalchemy.Column(sqlalchemy.Boolean, nullable=True)
     email = sqlalchemy.Column(sqlalchemy.String,
                               index=True, unique=True, nullable=True)
     password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
