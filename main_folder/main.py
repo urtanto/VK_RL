@@ -5,8 +5,8 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
 from vk_api.keyboard import VkKeyboard
 from flask import request
-from data.users import User
-from data import db_session
+from main_folder.data.users import User
+from main_folder.data import db_session
 
 db_session.global_init("db/users.sqlite")
 token = open('static/token.txt', mode='rt').read().split('\n')[0]
@@ -292,7 +292,7 @@ def game_process(user_id, id):
                                          f"\nВаш дом: {user.home.split(';')[1] if user.home.split(';')[0] == 'True' else 'нет'}"
                                          f"\nВаш гараж: {user.garage.split(';')[1] if user.garage.split(';')[0] == 'True' else 'нет'}"
                                          f"\nВаши машины: {cars}"
-                                         f"\nВаше образование: {user.education.split(';')[1] if user.education.split(';')[0] == 'True' else 'нет'}}",
+                                         f"\nВаше образование: {user.education.split(';')[1] if user.education.split(';')[0] == 'True' else 'нет'}",
                                  keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
             elif message == 'Выход':
