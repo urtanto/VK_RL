@@ -1,3 +1,5 @@
+from smtplib import SMTP
+
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
@@ -5,7 +7,6 @@ from vk_api.keyboard import VkKeyboard
 from flask import request
 from main_folder.data.users import User
 from main_folder.data import db_session
-
 
 db_session.global_init("db/users.sqlite")
 token = open('static/token.txt', mode='rt').read().split('\n')[0]
@@ -16,7 +17,18 @@ keyboards = {'login': [True,
                        'Line',
                        ["Зарегистрироваться", 'DEFAULT']],
              'вход': [False, ["Зарегистрироваться", 'DEFAULT']],
-             'main_menu': [False, ['Обо мне', 'DEFAULT']]}
+             'main_menu': [False, ['Обо мне', 'DEFAULT']],
+             'Отмена регистрации': [False, ['Отмена', 'NEGATIVE']]}
+
+
+def mail(mail):  # отправка кода на почту
+    number = random.randint(1000, 9999)
+    smtpObj = SMTP('smtp.gmail.com', port=587)
+    smtpObj.starttls()
+    smtpObj.login('vns.social.networks@gmail.com', 'dkflxvje`,jr')
+    smtpObj.sendmail("vns.social.networks@gmail.com", mail, str(number))
+    smtpObj.quit()
+    return number
 
 
 def create_keyboard(text):
@@ -67,7 +79,8 @@ def enter(id):
         if event.type == VkBotEventType.MESSAGE_NEW:
             post = event.obj.message['text']
             session = db_session.create_session()
-            if post in session.query(User).all():
+            exist = session.query(User).filter(User.email == post).first()
+            if exist:
                 user = session.query(User).filter(User.email == post).first()
                 break
             elif post == 'Зарегистрироваться':
@@ -82,7 +95,7 @@ def enter(id):
         if event.type == VkBotEventType.MESSAGE_NEW:
             password = event.obj.message['text']
             if password == user.password:
-                return main(1, id)
+                return game_process(user.id, id)
             elif password == 'Зарегистрироваться':
                 return register(id)
             else:
@@ -91,9 +104,107 @@ def enter(id):
 
 
 def register(id):
+    global keyboards
+    keyboard = create_keyboard('Отмена регистрации')
     vk = vk_session.get_api()
     vk.messages.send(user_id=id, message="Регистрация:",
-                     random_id=random.randint(0, 2 ** 64))
+                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+    vk.messages.send(user_id=id, message="Введите имя в игре:",
+                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            name_in_game = event.obj.message['text']
+            # проверка на пустое имя
+            if len(name_in_game.split()) == 0:
+                vk.messages.send(user_id=id, message="Имя должно быть не пустым!",
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                vk.messages.send(user_id=id, message="Введите имя в игре:",
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+            elif event.obj.message['text'] == 'Отмена':
+                return enter(id)
+            else:
+                break
+    vk.messages.send(user_id=id, message="Введите фамилию в игре:",
+                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            surname_in_game = event.obj.message['text']
+            # проверка на пустую фамилию
+            if len(surname_in_game.split()) == 0:
+                vk.messages.send(user_id=id, message="Фамилия должна быть не пустой!",
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                vk.messages.send(user_id=id, message="Введите фамилию в игре:",
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+            elif event.obj.message['text'] == 'Отмена':
+                return enter(id)
+            else:
+                break
+
+    vk.messages.send(user_id=id,
+                     message="Введите email (пожалуйста, введите существующий email, так-как будет проверка):",
+                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+    f = False
+    # флаг для почты
+    for event in longpoll.listen():
+        if f:
+            break
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            email = event.obj.message['text']
+            exist = db_session.create_session().query(User).filter(User.email == email).first()
+            if email == 'Отмена':
+                return enter(id)
+            if exist:
+                vk.messages.send(user_id=id, message='Данный email уже зарегистрирован!',
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                vk.messages.send(user_id=id,
+                                 message="Введите email (пожалуйста, введите существующий email, так-как будет проверка):",
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+            elif not exist:
+                number = mail(email)
+                vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
+                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                if event.obj.message['text'] == 'Отмена':
+                    return enter(id)
+                else:
+                    for ev in longpoll.listen():
+                        if ev.type == VkBotEventType.MESSAGE_NEW:
+                            mess = ev.obj.message['text']
+                            print(1)
+                            # состоит только из цифр
+                            if not mess.isdigit():
+                                vk.messages.send(user_id=id, message="Код состоит только из цифр!",
+                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                                vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
+                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                            # правильный ли код?
+                            elif int(mess) != number:
+                                vk.messages.send(user_id=id, message="Неправильный код!",
+                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                                vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
+                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                            elif ev.obj.message['text'] == 'Отмена':
+                                return enter(id)
+                            else:
+                                f = True
+                                break
+    vk.messages.send(user_id=id,
+                     message="Введите ваш пароль:",
+                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            password = event.obj.message['text']
+            if event.obj.message['text'] == 'Отмена':
+                return enter(id)
+            break
+    session = db_session.create_session()
+    user = User()
+    user.name = name_in_game
+    user.surname = surname_in_game
+    user.email = email
+    user.password = password
+    session.add(user)
+    session.commit()
+    return enter(id)
 
 
 def main(*func):
@@ -130,6 +241,21 @@ def main(*func):
                                      random_id=random.randint(0, 2 ** 64))
                 if event.obj.message['from_id'] in [463771138, 0] and response.lower() == 'ADMIN':
                     pass
+
+
+def game_process(user_id, id):
+    vk = vk_session.get_api()
+    keyboard = create_keyboard('main_menu')
+    vk.messages.send(user_id=id, message="Приветствуем тебя в нашей игре!", keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            message = event.obj.message['text']
+            if message == 'Обо мне':
+                session = db_session.create_session()
+                user = session.query(User).filter(User.id == user_id).first()
+                vk.messages.send(user_id=id, message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}\nВаша почта: {user.email}", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
 
 
 if __name__ == '__main__':
