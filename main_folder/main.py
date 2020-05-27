@@ -282,7 +282,8 @@ def game_process(user_id, id):
                 session = db_session.create_session()
                 user = session.query(User).filter(User.id == user_id).first()
                 work = user.profession
-                cars = '\n'.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[0] == 'True' else 'нет'
+                cars = '\n'.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[
+                                                                               0] == 'True' else 'нет'
                 if work == 'no':
                     work = 'никем'
                 vk.messages.send(user_id=id,
