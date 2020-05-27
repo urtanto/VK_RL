@@ -8,6 +8,7 @@ from flask import request
 from main_folder.data.users import User
 from main_folder.data import db_session
 
+furs = ['Volvo FM']
 db_session.global_init("db/users.sqlite")
 token = open('static/token.txt', mode='rt').read().split('\n')[0]
 vk_session = vk_api.VkApi(token=token)
@@ -41,20 +42,32 @@ keyboards = {'login': [True,
                      ['Высшее профессиональное образование', 'POSITIVE'],
                      'Line',
                      ['Вернуться назад', 'NEGATIVE']],
+             'main_job': [False,
+                          ['Работать', 'POSITIVE'],
+                          'Line',
+                          ['Сменить профессию', 'PRIMARY'],
+                          'Line',
+                          ['Вернуться назад', 'NEGATIVE']],
              'job': [False,
-                     ['Грузчик', 'PRIMARY'],
+                     ['Грузчик', 'DEFAULT'],
+                     'Line',
+                     ['Таксист', 'DEFAULT'],
+                     'Line',
+                     ['Банкир', 'DEFAULT'],
                      'Line',
                      ['Сварщик', 'PRIMARY'],
                      'Line',
-                     ['Банкир', 'PRIMARY'],
+                     ['Депутат', 'POSITIVE'],
                      'Line',
-                     ['Депутат', 'PRIMARY'],
+                     ['Дальнобойщик', 'POSITIVE'],
                      'Line',
-                     ['Программист', 'PRIMARY'],
+                     ['Программист', 'POSITIVE'],
                      'Line',
                      ['Вернуться назад', 'NEGATIVE']],
              'Отмена регистрации': [False,
-                                    ['Отмена', 'NEGATIVE']]}
+                                    ['Отмена', 'NEGATIVE']],
+             'back': [False,
+                      ['Вернуться назад', 'NEGATIVE']]}
 
 
 def mail(mail):  # отправка кода на почту
@@ -313,20 +326,81 @@ def test4():
     pass
 
 
+def working(user_id, id):
+    vk = vk_session.get_api()
+    session = db_session.create_session()
+    user = session.query(User).filter(User.id == user_id).first()
+    keyboard = create_keyboard('back')
+    letter = random.choice('qwertyuiopasdfghjklzxcvbnm')
+    times = random.randint(10, 100)
+    answer = letter * times
+    vk.messages.send(user_id=id, message=f"Введите букву: {letter}\n"
+                                         f"Количество раз: {times}",
+                     keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            response = event.obj.message['text']
+            if response == 'Вернуться назад':
+                return body_job(user_id, id)
+            elif response == answer:
+                vk.messages.send(user_id=id, message=f"Правильно, ты заработал {user.zarplata} руб.",
+                                 keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+                user.money += user.zarplata
+                session.commit()
+                return working(user_id, id)
+            else:
+                vk.messages.send(user_id=id, message="Неправильно!",
+                                 keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+                return working(user_id, id)
+
+
+def body_job(user_id, id):
+    vk = vk_session.get_api()
+    keyboard = create_keyboard('main_job')
+    vk.messages.send(user_id=id, message="Здраствуйте, выбирайте.",
+                     keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            response = event.obj.message['text']
+            if response == 'Работать':
+                return working(user_id, id)
+            elif response == 'Сменить профессию':
+                return job(id, user_id)
+            elif response == 'Вернуться назад':
+                return game_process(user_id, id)
+            else:
+                vk.messages.send(user_id=id, message="Нет так команды!",
+                                 keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+
+
 def job(id, user_id):
+    global furs
     vk = vk_session.get_api()
     session = db_session.create_session()
     keyboard = create_keyboard('job')
     educ = session.query(User).filter(User.id == user_id).first()
     educ = educ.education.split(';')[1]
-    print(123)
-    vk.messages.send(user_id=id, message="Кем хотите работать?", keyboard=keyboard,
+    vk.messages.send(user_id=id, message="Кем хотите работать?\n"
+                                         "Для ГРУЗЧИКА нужно иметь: Основное общее образование\n"
+                                         "Для ТАКСИСТА нужно иметь: Машина\n"
+                                         "Для БАНКИРА нужно иметь: Среднее общее образование\n"
+                                         "Для СВАРЩИКА нужно иметь: Среднее профессиональное образование\n"
+                                         "Для ДАЛЬНОБОЙЩИКА нужно иметь: тягач/фура\n"
+                                         "Для ДЕПУТАТА нужно иметь: Высшее образование\n"
+                                         "Для ПРОГРАММИСТА нужно иметь: Высшее профессиональное образование, дом\n",
+                     keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             user = session.query(User).filter(User.id == user_id).first()
             response = event.obj.message['text']
-            if educ == 'Высшее профессиональное образование' and response == 'Программист':
+            if educ == 'Высшее профессиональное образование' and response == 'Программист' and user.home.split(';')[
+                0] == 'True':
                 user.zarplata = 500000
                 user.profession = 'True;Программист'
                 session.commit()
@@ -351,6 +425,21 @@ def job(id, user_id):
                 user.profession = 'True;Депутат'
                 session.commit()
                 return game_process(user_id, id)
+            elif user.cars.split(';')[0] == 'True' and response == 'Таксист':
+                user.zarplata = 30000
+                user.profession = 'True;Таксист'
+                session.commit()
+                return game_process(user_id, id)
+            elif user.cars.split(';')[0] == 'True' and response == 'Дальнобойщик':
+                if any([(lambda car: True if car in furs else False)(i) for i in user.cars.split(';')[1].split(', ')]):
+                    user.zarplata = 300000
+                    user.profession = 'True;Дальнобойщик'
+                    session.commit()
+                    return game_process(user_id, id)
+                else:
+                    vk.messages.send(user_id=id, message="Вы не можете им работать, у вас нет тягачей/фур!",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
             elif response == 'Вернуться назад':
                 return game_process(user_id, id)
             else:
@@ -418,7 +507,7 @@ def game_process(user_id, id):
             elif message == 'Образование':
                 education(id, user_id)
             elif message == 'Работа':
-                job(id, user_id)
+                body_job(user_id, id)
             else:
                 vk.messages.send(user_id=event.obj.message['from_id'],
                                  message="Такой команды пока нет, попробуй снова.",
