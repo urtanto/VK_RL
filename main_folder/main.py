@@ -331,7 +331,7 @@ def main(*func):
                 else:
                     vk.messages.send(user_id=event.obj.message['from_id'], message="Такой команды нет, попробуй снова.",
                                      random_id=random.randint(0, 2 ** 64))
-                if event.obj.message['from_id'] in [463771138, 220401042] and response.lower() == 'ADMIN':
+                if event.obj.message['from_id'] in [463771138, 220401042] and response == 'ADMIN':
                     pass
 
 
@@ -542,6 +542,8 @@ def game_process(user_id, id):
                 vk.messages.send(user_id=event.obj.message['from_id'],
                                  message="Такой команды пока нет, попробуй снова.",
                                  random_id=random.randint(0, 2 ** 64))
+            if event.obj.message['from_id'] in [463771138, 220401042] and message == 'ADMIN':
+                pass
 
 
 if __name__ == '__main__':
