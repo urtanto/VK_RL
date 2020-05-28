@@ -336,7 +336,7 @@ def main(*func):
 
 
 def test1():
-    pass
+    return True
 
 
 def test2():
@@ -480,14 +480,22 @@ def education(id, user_id):
     vk = vk_session.get_api()
     session = db_session.create_session()
     educ = session.query(User).filter(User.id == user_id).first().education
+    user = session.query(User).filter(User.id == user_id).first()
     keyboard = create_keyboard('edu')
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             log(event.obj.message['from_id'], event.obj.message['text'])
             response = event.obj.message['text']
             if response == 'Среднее общее образование' and educ == 'Основное общее образование':
-                if test1():
-                    pass
+                result = test1()
+                if result:
+                    user.education = 'Среднее общее образование'
+                    session.commit()
+                else:
+                    vk.messages.send(user_id=id,
+                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
             elif response == 'Среднее профессиональное образование' and educ == 'Среднее общее образование':
                 if test2():
                     pass
