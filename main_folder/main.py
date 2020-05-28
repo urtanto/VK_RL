@@ -66,7 +66,16 @@ keyboards = {'login': [True,
              'Отмена регистрации': [False,
                                     ['Отмена', 'NEGATIVE']],
              'back': [False,
-                      ['Вернуться назад', 'NEGATIVE']]}
+                      ['Вернуться назад', 'NEGATIVE']],
+             'bank': [False,
+                      ['Мой счёт', 'DEFAULT'],
+                      ['Перевести', 'PRIMARY'],
+                      'Line',
+                      ['Купить валюту', 'POSITIVE'],
+                      'Line',
+                      ['Вернуться назад', 'NEGATIVE']],
+             'admin': [False,
+                       ['Выход в главное меню', 'NEGATIVE']]}
 
 
 def mail(mail):  # отправка кода на почту
@@ -79,13 +88,16 @@ def mail(mail):  # отправка кода на почту
     return number
 
 
-def log(id, text):
-    if text != 'admin':
-        print(f'vk_id: {id}; text: {text}')
-    else:
+def log(id, text, friend_id=None, give=False, sum=0):
+    if text == 'admin':
         session = db_session.create_session()
         user = session.query(User).filter(User.vk == id).first()
         print(f'vk_id: {id}; text: {text}; allowed: {"True" if user.role == "admin" else "False"}')
+    elif text == 'Перевод':
+        session = db_session.create_session()
+        print(f'Remittances from: {id} to: {friend_id} summa: {sum}')
+    else:
+        print(f'vk_id: {id}; text: {text}')
 
 
 def create_keyboard(text):
@@ -478,6 +490,88 @@ def job(id, user_id):
                                  random_id=random.randint(0, 2 ** 64))
 
 
+def give(user_id, id):
+    vk = vk_session.get_api()
+    keyboard = create_keyboard('back')
+    vk.messages.send(user_id=id, message="Введите id друга:", keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
+    session = db_session.create_session()
+    user = session.query(User).filter(User.id == user_id).first()
+    friend_id = 0
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            response = event.obj.message['text']
+            try:
+                if int(response) in [int(i[0]) for i in session.query(User.vk).all()]:
+                    friend_id = int(response)
+                    vk.messages.send(user_id=id, message="Введите сумму перевода:", keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+                    break
+                else:
+                    vk.messages.send(user_id=id, message="Нет такого id, попробуйте снова:", keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+            except Exception:
+                vk.messages.send(user_id=id, message=f"Неправильный ввод данных, попробуйте снова:", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+    _sum = 0
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            response = event.obj.message['text']
+            try:
+                _sum = int(response)
+                break
+            except Exception:
+                vk.messages.send(user_id=id, message="Не правильный формат ввода.", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+    try:
+        friend = session.query(User).filter(User.vk == friend_id).first()
+        if user.money - _sum < 0:
+            assert 1 / 0
+        friend.money += _sum
+        user.money -= _sum
+        session.commit()
+        vk.messages.send(user_id=id,
+                         message=f"Перевод выполнен.\nС вас списали: {_sum}\nВаш счёт на данный момент составляет: {user.money}",
+                         keyboard=keyboard,
+                         random_id=random.randint(0, 2 ** 64))
+        log(id, 'Перевод', friend_id, True, _sum)
+        return bank(user_id, id)
+    except Exception:
+        vk.messages.send(user_id=id,
+                         message=f"Перевод не выполнен.",
+                         keyboard=keyboard,
+                         random_id=random.randint(0, 2 ** 64))
+        log(id, 'Перевод', friend_id, False, _sum)
+        return bank(user_id, id)
+
+
+def bank(user_id, id):
+    vk = vk_session.get_api()
+    session = db_session.create_session()
+    user = session.query(User).filter(User.id == user_id).first()
+    keyboard = create_keyboard('bank')
+    vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
+    for event in longpoll.listen():
+        if event.type == VkBotEventType.MESSAGE_NEW:
+            log(event.obj.message['from_id'], event.obj.message['text'])
+            response = event.obj.message['text']
+            if response == 'Перевести':
+                return give(user_id, id)
+            elif response == 'Вернуться назад':
+                return game_process(user_id, id)
+            elif response == 'Мой счёт':
+                vk.messages.send(user_id=id, message=f"На данный момент ваш счёт составляет: {user.money}", keyboard=keyboard,
+                                 random_id=random.randint(0, 2 ** 64))
+            else:
+                if response == 'Купить валюту':
+                    vk.messages.send(user_id=id, message="В будщем будет добавленна.", keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+                else:
+                    vk.messages.send(user_id=id, message="Такой функции нет.", keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+
+
 def education(id, user_id):
     vk = vk_session.get_api()
     session = db_session.create_session()
@@ -575,6 +669,8 @@ def game_process(user_id, id):
                 education(id, user_id)
             elif message == 'Работа':
                 body_job(user_id, id)
+            elif message == 'БАНК':
+                bank(user_id, id)
             elif user.role == 'admin' and message == 'ADMIN':
                 pass
             else:
