@@ -23,3 +23,5 @@ class User(SqlAlchemyBase, UserMixin):
     cars = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     education = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     last_date = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    ban = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    role = sqlalchemy.Column(sqlalchemy.String, nullable=True)

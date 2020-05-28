@@ -80,7 +80,12 @@ def mail(mail):  # отправка кода на почту
 
 
 def log(id, text):
-    print(f'vk_id: {id}; text: {text}')
+    if text != 'admin':
+        print(f'vk_id: {id}; text: {text}')
+    else:
+        session = db_session.create_session()
+        user = session.query(User).filter(User.vk == id).first()
+        print(f'vk_id: {id}; text: {text}; allowed: {"True" if user.role == "admin" else "False"}')
 
 
 def create_keyboard(text):
@@ -285,9 +290,11 @@ def register(id):
     user.cars = 'False'
     user.garage = 'False'
     user.education = 'Основное общее образование'
-    user.profession = 'no'
+    user.profession = 'False'
     user.enter = 'True'
     user.vk = id
+    user.ban = False
+    user.role = 'user'
     session.add(user)
     session.commit()
     return enter(id)
@@ -539,6 +546,8 @@ def game_process(user_id, id):
     keyboard = create_keyboard('main_menu')
     vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
+    session = db_session.create_session()
+    user = session.query(User).filter(User.id == user_id).first()
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             log(event.obj.message['from_id'], event.obj.message['text'])
@@ -559,8 +568,6 @@ def game_process(user_id, id):
                                  keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
             elif message == 'Выход':
-                session = db_session.create_session()
-                user = session.query(User).filter(User.id == user_id).first()
                 user.enter = 'False'
                 session.commit()
                 return main(-1, id)
@@ -568,12 +575,12 @@ def game_process(user_id, id):
                 education(id, user_id)
             elif message == 'Работа':
                 body_job(user_id, id)
+            elif user.role == 'admin' and message == 'ADMIN':
+                pass
             else:
                 vk.messages.send(user_id=event.obj.message['from_id'],
                                  message="Такой команды пока нет.",
                                  random_id=random.randint(0, 2 ** 64))
-            if event.obj.message['from_id'] in [463771138, 220401042] and message == 'ADMIN':
-                pass
 
 
 if __name__ == '__main__':
