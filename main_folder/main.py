@@ -56,9 +56,9 @@ keyboards = {'login': [True,
                      'Line',
                      ['Сварщик', 'PRIMARY'],
                      'Line',
-                     ['Депутат', 'POSITIVE'],
+                     ['Дальнобойщик', 'PRIMARY'],
                      'Line',
-                     ['Дальнобойщик', 'POSITIVE'],
+                     ['Депутат', 'POSITIVE'],
                      'Line',
                      ['Программист', 'POSITIVE'],
                      'Line',
@@ -141,7 +141,6 @@ def money_earn(id):
 
 
 def enter(id):
-    log(id, 'enter')
     session = db_session.create_session()
     user = session.query(User).filter(User.vk == id).first()
     if user.enter == 'True':
@@ -183,7 +182,6 @@ def enter(id):
 
 def register(id):
     global keyboards
-    log(id, 'register')
     keyboard = create_keyboard('Отмена регистрации')
     vk = vk_session.get_api()
     vk.messages.send(user_id=id, message="Регистрация:",
@@ -309,9 +307,6 @@ def main(*func):
                          keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
-            print('Новое сообщение:')
-            print('Для меня от:', event.obj.message['from_id'])
-            print('Текст:', event.obj.message['text'])
             log(event.obj.message['from_id'], event.obj.message['text'])
             response = event.message.text.casefold()
             vk = vk_session.get_api()
@@ -336,19 +331,19 @@ def main(*func):
 
 
 def test1():
-    return True
+    return False
 
 
 def test2():
-    pass
+    return False
 
 
 def test3():
-    pass
+    return False
 
 
 def test4():
-    pass
+    return False
 
 
 def working(user_id, id):
@@ -366,7 +361,7 @@ def working(user_id, id):
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             response = event.obj.message['text']
-            log(event.obj.message['from_id'], event.obj.message['text'])
+            log(event.obj.message['from_id'], 'Работает')
             if response == 'Вернуться назад':
                 return body_job(user_id, id)
             elif response == answer:
@@ -411,15 +406,15 @@ def job(id, user_id):
     session = db_session.create_session()
     keyboard = create_keyboard('job')
     educ = session.query(User).filter(User.id == user_id).first()
-    educ = educ.education.split(';')[1]
+    educ = educ.education
     vk.messages.send(user_id=id, message="Кем хотите работать?\n"
-                                         "Для ГРУЗЧИКА нужно иметь: Основное общее образование\n"
-                                         "Для ТАКСИСТА нужно иметь: Машина\n"
-                                         "Для БАНКИРА нужно иметь: Среднее общее образование\n"
-                                         "Для СВАРЩИКА нужно иметь: Среднее профессиональное образование\n"
-                                         "Для ДАЛЬНОБОЙЩИКА нужно иметь: тягач/фура\n"
-                                         "Для ДЕПУТАТА нужно иметь: Высшее образование\n"
-                                         "Для ПРОГРАММИСТА нужно иметь: Высшее профессиональное образование, дом\n",
+                                         "Для ГРУЗЧИКА(20 тыс.) нужно иметь: Основное общее образование\n"
+                                         "Для ТАКСИСТА(30 тыс.) нужно иметь: Машина\n"
+                                         "Для БАНКИРА(50 тыс.) нужно иметь: Среднее общее образование\n"
+                                         "Для СВАРЩИКА(100 тыс.) нужно иметь: Среднее профессиональное образование\n"
+                                         "Для ДАЛЬНОБОЙЩИКА(300 тыс.) нужно иметь: тягач/фура\n"
+                                         "Для ДЕПУТАТА(300 тыс.) нужно иметь: Высшее образование\n"
+                                         "Для ПРОГРАММИСТА(500 тыс.) нужно иметь: Высшее профессиональное образование, дом\n",
                      keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
@@ -479,9 +474,11 @@ def job(id, user_id):
 def education(id, user_id):
     vk = vk_session.get_api()
     session = db_session.create_session()
-    educ = session.query(User).filter(User.id == user_id).first().education
     user = session.query(User).filter(User.id == user_id).first()
+    educ = user.education
     keyboard = create_keyboard('edu')
+    vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
+                     random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             log(event.obj.message['from_id'], event.obj.message['text'])
@@ -491,24 +488,49 @@ def education(id, user_id):
                 if result:
                     user.education = 'Среднее общее образование'
                     session.commit()
+                    return game_process(user_id, id)
                 else:
                     vk.messages.send(user_id=id,
                                      message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
                                      keyboard=keyboard,
                                      random_id=random.randint(0, 2 ** 64))
             elif response == 'Среднее профессиональное образование' and educ == 'Среднее общее образование':
-                if test2():
-                    pass
+                result = test2()
+                if result:
+                    user.education = 'Среднее профессиональное образование'
+                    session.commit()
+                    return game_process(user_id, id)
+                else:
+                    vk.messages.send(user_id=id,
+                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
             elif response == 'Высшее образование' and educ == 'Среднее профессиональное образование':
-                if test3():
-                    pass
+                result = test3()
+                if result:
+                    user.education = 'Высшее образованиее'
+                    session.commit()
+                    return game_process(user_id, id)
+                else:
+                    vk.messages.send(user_id=id,
+                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
             elif response == 'Высшее профессиональное образование' and educ == 'Высшее образование':
-                if test4():
-                    pass
+                result = test4()
+                if result:
+                    user.education = 'Высшее профессиональное образование'
+                    session.commit()
+                    return game_process(user_id, id)
+                else:
+                    vk.messages.send(user_id=id,
+                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
             elif response == 'Вернуться назад':
                 return game_process(user_id, id)
             else:
-                vk.messages.send(user_id=id, message="Такой команды не существует", keyboard=keyboard,
+                vk.messages.send(user_id=id, message="Попробуй снова.", keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
 
 
@@ -533,7 +555,7 @@ def game_process(user_id, id):
                                          f"\nВаш дом: {user.home.split(';')[1] if user.home.split(';')[0] == 'True' else 'нет'}"
                                          f"\nВаш гараж: {user.garage.split(';')[1] if user.garage.split(';')[0] == 'True' else 'нет'}"
                                          f"\nВаши машины: {cars}"
-                                         f"\nВаше образование: {user.education.split(';')[1] if user.education.split(';')[0] == 'True' else 'нет'}",
+                                         f"\nВаше образование: {user.education}",
                                  keyboard=keyboard,
                                  random_id=random.randint(0, 2 ** 64))
             elif message == 'Выход':
@@ -548,7 +570,7 @@ def game_process(user_id, id):
                 body_job(user_id, id)
             else:
                 vk.messages.send(user_id=event.obj.message['from_id'],
-                                 message="Такой команды пока нет, попробуй снова.",
+                                 message="Такой команды пока нет.",
                                  random_id=random.randint(0, 2 ** 64))
             if event.obj.message['from_id'] in [463771138, 220401042] and message == 'ADMIN':
                 pass
