@@ -4,7 +4,6 @@ import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 import random
 from vk_api.keyboard import VkKeyboard
-from flask import request
 from main_folder.data.users import User
 from main_folder.data import db_session
 
@@ -80,6 +79,10 @@ def mail(mail):  # отправка кода на почту
     return number
 
 
+def log(id, text):
+    print(f'vk_id: {id}; text: {text}')
+
+
 def create_keyboard(text):
     global keyboards
     if keyboards[text][0]:
@@ -138,6 +141,7 @@ def money_earn(id):
 
 
 def enter(id):
+    log(id, 'enter')
     session = db_session.create_session()
     user = session.query(User).filter(User.vk == id).first()
     if user.enter == 'True':
@@ -179,6 +183,7 @@ def enter(id):
 
 def register(id):
     global keyboards
+    log(id, 'register')
     keyboard = create_keyboard('Отмена регистрации')
     vk = vk_session.get_api()
     vk.messages.send(user_id=id, message="Регистрация:",
@@ -307,6 +312,7 @@ def main(*func):
             print('Новое сообщение:')
             print('Для меня от:', event.obj.message['from_id'])
             print('Текст:', event.obj.message['text'])
+            log(event.obj.message['from_id'], event.obj.message['text'])
             response = event.message.text.casefold()
             vk = vk_session.get_api()
             if event.from_user:
@@ -360,6 +366,7 @@ def working(user_id, id):
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
             response = event.obj.message['text']
+            log(event.obj.message['from_id'], event.obj.message['text'])
             if response == 'Вернуться назад':
                 return body_job(user_id, id)
             elif response == answer:
@@ -384,6 +391,7 @@ def body_job(user_id, id):
                      random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
+            log(event.obj.message['from_id'], event.obj.message['text'])
             response = event.obj.message['text']
             if response == 'Работать':
                 return working(user_id, id)
@@ -416,6 +424,7 @@ def job(id, user_id):
                      random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
+            log(event.obj.message['from_id'], event.obj.message['text'])
             user = session.query(User).filter(User.id == user_id).first()
             response = event.obj.message['text']
             if educ == 'Высшее профессиональное образование' and response == 'Программист' and user.home.split(';')[
@@ -474,6 +483,7 @@ def education(id, user_id):
     keyboard = create_keyboard('edu')
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
+            log(event.obj.message['from_id'], event.obj.message['text'])
             response = event.obj.message['text']
             if response == 'Среднее общее образование' and educ == 'Основное общее образование':
                 if test1():
@@ -501,6 +511,7 @@ def game_process(user_id, id):
                      random_id=random.randint(0, 2 ** 64))
     for event in longpoll.listen():
         if event.type == VkBotEventType.MESSAGE_NEW:
+            log(event.obj.message['from_id'], event.obj.message['text'])
             message = event.obj.message['text']
             if message == 'Обо мне':
                 session = db_session.create_session()
