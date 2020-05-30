@@ -180,34 +180,38 @@ def enter(id):
         keyboard = create_keyboard('вход')
         vk = vk_session.get_api()
         vk.messages.send(user_id=id, message="Введите почту:", keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
-        for event in longpoll.listen():
-            if event.type == VkBotEventType.MESSAGE_NEW:
-                post = event.obj.message['text']
-                exist = session.query(User).filter(User.email == post).first()
-                if exist:
-                    user = session.query(User).filter(User.email == post).first()
-                    break
-                elif post == 'Зарегистрироваться':
-                    return register(id)
-                else:
-                    vk.messages.send(user_id=id, message="Такой почты не зарегистрировано!\nВведите почту:",
-                                     keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
-        vk = vk_session.get_api()
-        vk.messages.send(user_id=id, message="Введите пароль:", keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
-        for event in longpoll.listen():
-            if event.type == VkBotEventType.MESSAGE_NEW:
-                password = event.obj.message['text']
-                if password == user.password:
-                    user.enter = 'True'
-                    session.commit()
-                    money_earn(id)
-                    return game_process(user.id, id)
-                elif password == 'Зарегистрироваться':
-                    return register(id)
-                else:
-                    vk.messages.send(user_id=id, message="Не правильный пароль!\nВведите пароль:", keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
+        try:
+            for event in longpoll.listen():
+                if event.type == VkBotEventType.MESSAGE_NEW:
+                    post = event.obj.message['text']
+                    exist = session.query(User).filter(User.email == post).first()
+                    if exist:
+                        user = session.query(User).filter(User.email == post).first()
+                        break
+                    elif post == 'Зарегистрироваться':
+                        return register(id)
+                    else:
+                        vk.messages.send(user_id=id, message="Такой почты не зарегистрировано!\nВведите почту:",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+            vk = vk_session.get_api()
+            vk.messages.send(user_id=id, message="Введите пароль:", keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
+            for event in longpoll.listen():
+                if event.type == VkBotEventType.MESSAGE_NEW:
+                    password = event.obj.message['text']
+                    if password == user.password:
+                        user.enter = 'True'
+                        session.commit()
+                        money_earn(id)
+                        return game_process(user.id, id)
+                    elif password == 'Зарегистрироваться':
+                        return register(id)
+                    else:
+                        vk.messages.send(user_id=id, message="Не правильный пароль!\nВведите пароль:", keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+        except Exception:
+            print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+            return main(0)
 
 
 def register(id):
@@ -222,91 +226,95 @@ def register(id):
                      random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
     vk.messages.send(user_id=id, message="Введите имя в игре:",
                      random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            name_in_game = event.obj.message['text']
-            # проверка на пустое имя
-            if len(name_in_game.split()) == 0:
-                vk.messages.send(user_id=id, message="Имя должно быть не пустым!",
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                vk.messages.send(user_id=id, message="Введите имя в игре:",
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-            elif event.obj.message['text'] == 'Отмена':
-                return enter(id)
-            else:
-                break
-    vk.messages.send(user_id=id, message="Введите фамилию в игре:",
-                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            surname_in_game = event.obj.message['text']
-            # проверка на пустую фамилию
-            if len(surname_in_game.split()) == 0:
-                vk.messages.send(user_id=id, message="Фамилия должна быть не пустой!",
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                vk.messages.send(user_id=id, message="Введите фамилию в игре:",
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-            elif event.obj.message['text'] == 'Отмена':
-                return enter(id)
-            else:
-                break
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                name_in_game = event.obj.message['text']
+                # проверка на пустое имя
+                if len(name_in_game.split()) == 0:
+                    vk.messages.send(user_id=id, message="Имя должно быть не пустым!",
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                    vk.messages.send(user_id=id, message="Введите имя в игре:",
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                elif event.obj.message['text'] == 'Отмена':
+                    return enter(id)
+                else:
+                    break
+        vk.messages.send(user_id=id, message="Введите фамилию в игре:",
+                         random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                surname_in_game = event.obj.message['text']
+                # проверка на пустую фамилию
+                if len(surname_in_game.split()) == 0:
+                    vk.messages.send(user_id=id, message="Фамилия должна быть не пустой!",
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                    vk.messages.send(user_id=id, message="Введите фамилию в игре:",
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                elif event.obj.message['text'] == 'Отмена':
+                    return enter(id)
+                else:
+                    break
 
-    vk.messages.send(user_id=id,
-                     message="Введите email (пожалуйста, введите существующий email, так-как будет проверка):",
-                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-    f = False
-    # флаг для почты
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            email = event.obj.message['text']
-            exist = db_session.create_session().query(User).filter(User.email == email).first()
-            if email == 'Отмена':
-                return enter(id)
-            if exist:
-                vk.messages.send(user_id=id, message='Данный email уже зарегистрирован!',
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                vk.messages.send(user_id=id,
-                                 message="Введите email (пожалуйста, введите существующий email, так-как будет проверка):",
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-            elif not exist:
-                number = mail(email)
-                vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
-                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+        vk.messages.send(user_id=id,
+                         message="Введите email (пожалуйста, введите существующий email, так-как будет проверка):",
+                         random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+        f = False
+        # флаг для почты
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                email = event.obj.message['text']
+                exist = db_session.create_session().query(User).filter(User.email == email).first()
+                if email == 'Отмена':
+                    return enter(id)
+                if exist:
+                    vk.messages.send(user_id=id, message='Данный email уже зарегистрирован!',
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                    vk.messages.send(user_id=id,
+                                     message="Введите email (пожалуйста, введите существующий email, так-как будет проверка):",
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                elif not exist:
+                    number = mail(email)
+                    vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
+                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                    if event.obj.message['text'] == 'Отмена':
+                        return main(0)
+                    else:
+                        for ev in longpoll.listen():
+                            if ev.type == VkBotEventType.MESSAGE_NEW:
+                                mess = ev.obj.message['text']
+                                # состоит только из цифр
+                                if not mess.isdigit():
+                                    vk.messages.send(user_id=id, message="Код состоит только из цифр!",
+                                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                                    vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
+                                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                                # правильный ли код?
+                                elif int(mess) != number:
+                                    vk.messages.send(user_id=id, message="Неправильный код!",
+                                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                                    vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
+                                                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+                                elif ev.obj.message['text'] == 'Отмена':
+                                    return enter(id)
+                                else:
+                                    f = True
+                                    break
+            if f:
+                break
+        vk.messages.send(user_id=id,
+                         message="Введите ваш пароль:",
+                         random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                password = event.obj.message['text']
                 if event.obj.message['text'] == 'Отмена':
                     return main(0)
                 else:
-                    for ev in longpoll.listen():
-                        if ev.type == VkBotEventType.MESSAGE_NEW:
-                            mess = ev.obj.message['text']
-                            # состоит только из цифр
-                            if not mess.isdigit():
-                                vk.messages.send(user_id=id, message="Код состоит только из цифр!",
-                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                                vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
-                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                            # правильный ли код?
-                            elif int(mess) != number:
-                                vk.messages.send(user_id=id, message="Неправильный код!",
-                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                                vk.messages.send(user_id=id, message="Введите код пришедший на почту:",
-                                                 random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-                            elif ev.obj.message['text'] == 'Отмена':
-                                return enter(id)
-                            else:
-                                f = True
-                                break
-        if f:
-            break
-    vk.messages.send(user_id=id,
-                     message="Введите ваш пароль:",
-                     random_id=random.randint(0, 2 ** 64), keyboard=keyboard)
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            password = event.obj.message['text']
-            if event.obj.message['text'] == 'Отмена':
-                return main(0)
-            else:
-                break
+                    break
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return main(0)
     session = db_session.create_session()
     user = User()
     user.name = name_in_game
@@ -350,30 +358,34 @@ def main(*func):
         keyboard = create_keyboard('login')
         vk.messages.send(user_id=func[1], message="Привет",
                          keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            response = event.message.text.casefold()
-            vk = vk_session.get_api()
-            if event.from_user:
-                if response.lower() in ["привет", "начать"]:
-                    keyboard = create_keyboard('login')
-                    vk.messages.send(user_id=event.obj.message['from_id'], message="Привет",
-                                     keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
-                elif response.lower() == "закрыть":
-                    empty_keyboard = create_empty_keyboard()
-                    vk.messages.send(user_id=event.obj.message['from_id'], message="Пока",
-                                     keyboard=empty_keyboard, random_id=random.randint(0, 2 ** 64))
-                elif response.lower() == "войти":
-                    return enter(event.obj.message['from_id'])
-                elif response.lower() == "зарегистрироваться":
-                    return register(event.obj.message['from_id'])
-                else:
-                    keyboard = create_keyboard('login')
-                    vk.messages.send(user_id=event.obj.message['from_id'], message="Такой команды нет, попробуй снова.",
-                                     keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
-                if event.obj.message['from_id'] in [463771138, 220401042] and response == 'ADMIN':
-                    pass
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                response = event.message.text.casefold()
+                vk = vk_session.get_api()
+                if event.from_user:
+                    if response.lower() in ["привет", "начать"]:
+                        keyboard = create_keyboard('login')
+                        vk.messages.send(user_id=event.obj.message['from_id'], message="Привет",
+                                         keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
+                    elif response.lower() == "закрыть":
+                        empty_keyboard = create_empty_keyboard()
+                        vk.messages.send(user_id=event.obj.message['from_id'], message="Пока",
+                                         keyboard=empty_keyboard, random_id=random.randint(0, 2 ** 64))
+                    elif response.lower() == "войти":
+                        return enter(event.obj.message['from_id'])
+                    elif response.lower() == "зарегистрироваться":
+                        return register(event.obj.message['from_id'])
+                    else:
+                        keyboard = create_keyboard('login')
+                        vk.messages.send(user_id=event.obj.message['from_id'], message="Такой команды нет, попробуй снова.",
+                                         keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
+                    if event.obj.message['from_id'] in [463771138, 220401042] and response == 'ADMIN':
+                        pass
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return main(0)
 
 
 def test1():
@@ -404,24 +416,28 @@ def working(user_id, id):
                                          f"Количество раз: {times}",
                      keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            response = event.obj.message['text']
-            log(event.obj.message['from_id'], 'Работает')
-            if response == 'Вернуться назад':
-                return body_job(user_id, id)
-            elif response == answer:
-                vk.messages.send(user_id=id, message=f"Правильно, ты заработал {user.zarplata} руб.",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-                user.money += user.zarplata
-                session.commit()
-                return working(user_id, id)
-            else:
-                vk.messages.send(user_id=id, message="Неправильно!",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-                return working(user_id, id)
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                response = event.obj.message['text']
+                log(event.obj.message['from_id'], 'Работает')
+                if response == 'Вернуться назад':
+                    return body_job(user_id, id)
+                elif response == answer:
+                    vk.messages.send(user_id=id, message=f"Правильно, ты заработал {user.zarplata} руб.",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+                    user.money += user.zarplata
+                    session.commit()
+                    return working(user_id, id)
+                else:
+                    vk.messages.send(user_id=id, message="Неправильно!",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+                    return working(user_id, id)
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
 def body_job(user_id, id):
@@ -430,20 +446,24 @@ def body_job(user_id, id):
     vk.messages.send(user_id=id, message="Здраствуйте, выбирайте.",
                      keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            response = event.obj.message['text']
-            if response == 'Работать':
-                return working(user_id, id)
-            elif response == 'Сменить профессию':
-                return job(id, user_id)
-            elif response == 'Вернуться назад':
-                return game_process(user_id, id)
-            else:
-                vk.messages.send(user_id=id, message="Нет так команды!",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                response = event.obj.message['text']
+                if response == 'Работать':
+                    return working(user_id, id)
+                elif response == 'Сменить профессию':
+                    return job(id, user_id)
+                elif response == 'Вернуться назад':
+                    return game_process(user_id, id)
+                else:
+                    vk.messages.send(user_id=id, message="Нет так команды!",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
 def job(id, user_id):
@@ -463,58 +483,62 @@ def job(id, user_id):
                                          "Для ПРОГРАММИСТА(500 тыс.) нужно иметь: Высшее профессиональное образование, дом\n",
                      keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            user = session.query(User).filter(User.id == user_id).first()
-            response = event.obj.message['text']
-            if educ == 'Высшее профессиональное образование' and response == 'Программист' and user.home.split(';')[
-                0] == 'True':
-                user.zarplata = 500000
-                user.profession = 'True;Программист'
-                session.commit()
-                return game_process(user_id, id)
-            elif educ == 'Основное общее образование' and response == 'Грузчик':
-                user.zarplata = 20000
-                user.profession = 'True;Грузчик'
-                session.commit()
-                return game_process(user_id, id)
-            elif educ == 'Среднее общее образование' and response == 'Банкир':
-                user.zarplata = 50000
-                user.profession = 'True;Банкир'
-                session.commit()
-                return game_process(user_id, id)
-            elif educ == 'Среднее профессиональное образование' and response == 'Сварщик':
-                user.zarplata = 100000
-                user.profession = 'True;Сварщик'
-                session.commit()
-                return game_process(user_id, id)
-            elif educ == 'Высшее образование' and response == 'Депутат':
-                user.zarplata = 300000
-                user.profession = 'True;Депутат'
-                session.commit()
-                return game_process(user_id, id)
-            elif user.cars.split(';')[0] == 'True' and response == 'Таксист':
-                user.zarplata = 30000
-                user.profession = 'True;Таксист'
-                session.commit()
-                return game_process(user_id, id)
-            elif user.cars.split(';')[0] == 'True' and response == 'Дальнобойщик':
-                if any([(lambda car: True if car in furs else False)(i) for i in user.cars.split(';')[1].split(', ')]):
-                    user.zarplata = 300000
-                    user.profession = 'True;Дальнобойщик'
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                user = session.query(User).filter(User.id == user_id).first()
+                response = event.obj.message['text']
+                if educ == 'Высшее профессиональное образование' and response == 'Программист' and user.home.split(';')[
+                    0] == 'True':
+                    user.zarplata = 500000
+                    user.profession = 'True;Программист'
                     session.commit()
                     return game_process(user_id, id)
+                elif educ == 'Основное общее образование' and response == 'Грузчик':
+                    user.zarplata = 20000
+                    user.profession = 'True;Грузчик'
+                    session.commit()
+                    return game_process(user_id, id)
+                elif educ == 'Среднее общее образование' and response == 'Банкир':
+                    user.zarplata = 50000
+                    user.profession = 'True;Банкир'
+                    session.commit()
+                    return game_process(user_id, id)
+                elif educ == 'Среднее профессиональное образование' and response == 'Сварщик':
+                    user.zarplata = 100000
+                    user.profession = 'True;Сварщик'
+                    session.commit()
+                    return game_process(user_id, id)
+                elif educ == 'Высшее образование' and response == 'Депутат':
+                    user.zarplata = 300000
+                    user.profession = 'True;Депутат'
+                    session.commit()
+                    return game_process(user_id, id)
+                elif user.cars.split(';')[0] == 'True' and response == 'Таксист':
+                    user.zarplata = 30000
+                    user.profession = 'True;Таксист'
+                    session.commit()
+                    return game_process(user_id, id)
+                elif user.cars.split(';')[0] == 'True' and response == 'Дальнобойщик':
+                    if any([(lambda car: True if car in furs else False)(i) for i in user.cars.split(';')[1].split(', ')]):
+                        user.zarplata = 300000
+                        user.profession = 'True;Дальнобойщик'
+                        session.commit()
+                        return game_process(user_id, id)
+                    else:
+                        vk.messages.send(user_id=id, message="Вы не можете им работать, у вас нет тягачей/фур!",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                elif response == 'Вернуться назад':
+                    return game_process(user_id, id)
                 else:
-                    vk.messages.send(user_id=id, message="Вы не можете им работать, у вас нет тягачей/фур!",
+                    vk.messages.send(user_id=id, message="Вы не можете им работать, либо такой команды нет.",
                                      keyboard=keyboard,
                                      random_id=random.randint(0, 2 ** 64))
-            elif response == 'Вернуться назад':
-                return game_process(user_id, id)
-            else:
-                vk.messages.send(user_id=id, message="Вы не можете им работать, либо такой команды нет.",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
 def give(user_id, id):
@@ -525,31 +549,35 @@ def give(user_id, id):
     session = db_session.create_session()
     user = session.query(User).filter(User.id == user_id).first()
     friend_id = 0
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            response = event.obj.message['text']
-            try:
-                if int(response) in [int(i[0]) for i in session.query(User.vk).all()]:
-                    friend_id = int(response)
-                    vk.messages.send(user_id=id, message="Введите сумму перевода:", keyboard=keyboard,
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                response = event.obj.message['text']
+                try:
+                    if int(response) in [int(i[0]) for i in session.query(User.vk).all()]:
+                        friend_id = int(response)
+                        vk.messages.send(user_id=id, message="Введите сумму перевода:", keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                        break
+                    else:
+                        vk.messages.send(user_id=id, message="Нет такого id, попробуйте снова:", keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                except Exception:
+                    vk.messages.send(user_id=id, message=f"Неправильный ввод данных, попробуйте снова:", keyboard=keyboard,
                                      random_id=random.randint(0, 2 ** 64))
+        _sum = 0
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                response = event.obj.message['text']
+                try:
+                    _sum = int(response)
                     break
-                else:
-                    vk.messages.send(user_id=id, message="Нет такого id, попробуйте снова:", keyboard=keyboard,
+                except Exception:
+                    vk.messages.send(user_id=id, message="Не правильный формат ввода.", keyboard=keyboard,
                                      random_id=random.randint(0, 2 ** 64))
-            except Exception:
-                vk.messages.send(user_id=id, message=f"Неправильный ввод данных, попробуйте снова:", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-    _sum = 0
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            response = event.obj.message['text']
-            try:
-                _sum = int(response)
-                break
-            except Exception:
-                vk.messages.send(user_id=id, message="Не правильный формат ввода.", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
     try:
         friend = session.query(User).filter(User.vk == friend_id).first()
         if user.money - _sum < 0:
@@ -579,25 +607,29 @@ def bank(user_id, id):
     keyboard = create_keyboard('bank')
     vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            response = event.obj.message['text']
-            if response == 'Перевести':
-                return give(user_id, id)
-            elif response == 'Вернуться назад':
-                return game_process(user_id, id)
-            elif response == 'Мой счёт':
-                vk.messages.send(user_id=id, message=f"На данный момент ваш счёт составляет: {user.money}",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-            else:
-                if response == 'Купить валюту':
-                    vk.messages.send(user_id=id, message="В будщем будет добавленна.", keyboard=keyboard,
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                response = event.obj.message['text']
+                if response == 'Перевести':
+                    return give(user_id, id)
+                elif response == 'Вернуться назад':
+                    return game_process(user_id, id)
+                elif response == 'Мой счёт':
+                    vk.messages.send(user_id=id, message=f"На данный момент ваш счёт составляет: {user.money}",
+                                     keyboard=keyboard,
                                      random_id=random.randint(0, 2 ** 64))
                 else:
-                    vk.messages.send(user_id=id, message="Такой функции нет.", keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
+                    if response == 'Купить валюту':
+                        vk.messages.send(user_id=id, message="В будщем будет добавленна.", keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                    else:
+                        vk.messages.send(user_id=id, message="Такой функции нет.", keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
 def education(id, user_id):
@@ -608,59 +640,63 @@ def education(id, user_id):
     keyboard = create_keyboard('edu')
     vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            response = event.obj.message['text']
-            if response == 'Среднее общее образование' and educ == 'Основное общее образование':
-                result = test1()
-                if result:
-                    user.education = 'Среднее общее образование'
-                    session.commit()
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                response = event.obj.message['text']
+                if response == 'Среднее общее образование' and educ == 'Основное общее образование':
+                    result = test1()
+                    if result:
+                        user.education = 'Среднее общее образование'
+                        session.commit()
+                        return game_process(user_id, id)
+                    else:
+                        vk.messages.send(user_id=id,
+                                         message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                elif response == 'Среднее профессиональное образование' and educ == 'Среднее общее образование':
+                    result = test2()
+                    if result:
+                        user.education = 'Среднее профессиональное образование'
+                        session.commit()
+                        return game_process(user_id, id)
+                    else:
+                        vk.messages.send(user_id=id,
+                                         message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                elif response == 'Высшее образование' and educ == 'Среднее профессиональное образование':
+                    result = test3()
+                    if result:
+                        user.education = 'Высшее образованиее'
+                        session.commit()
+                        return game_process(user_id, id)
+                    else:
+                        vk.messages.send(user_id=id,
+                                         message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                elif response == 'Высшее профессиональное образование' and educ == 'Высшее образование':
+                    result = test4()
+                    if result:
+                        user.education = 'Высшее профессиональное образование'
+                        session.commit()
+                        return game_process(user_id, id)
+                    else:
+                        vk.messages.send(user_id=id,
+                                         message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                elif response == 'Вернуться назад':
                     return game_process(user_id, id)
                 else:
-                    vk.messages.send(user_id=id,
-                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
-                                     keyboard=keyboard,
+                    vk.messages.send(user_id=id, message="Попробуй снова.", keyboard=keyboard,
                                      random_id=random.randint(0, 2 ** 64))
-            elif response == 'Среднее профессиональное образование' and educ == 'Среднее общее образование':
-                result = test2()
-                if result:
-                    user.education = 'Среднее профессиональное образование'
-                    session.commit()
-                    return game_process(user_id, id)
-                else:
-                    vk.messages.send(user_id=id,
-                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
-                                     keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
-            elif response == 'Высшее образование' and educ == 'Среднее профессиональное образование':
-                result = test3()
-                if result:
-                    user.education = 'Высшее образованиее'
-                    session.commit()
-                    return game_process(user_id, id)
-                else:
-                    vk.messages.send(user_id=id,
-                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
-                                     keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
-            elif response == 'Высшее профессиональное образование' and educ == 'Высшее образование':
-                result = test4()
-                if result:
-                    user.education = 'Высшее профессиональное образование'
-                    session.commit()
-                    return game_process(user_id, id)
-                else:
-                    vk.messages.send(user_id=id,
-                                     message=f"{'Вы не прошли тест' if not result else 'Нужно предыдущее образование'}",
-                                     keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
-            elif response == 'Вернуться назад':
-                return game_process(user_id, id)
-            else:
-                vk.messages.send(user_id=id, message="Попробуй снова.", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
 def ugodaika(user_id, id):
@@ -674,47 +710,51 @@ def ugodaika(user_id, id):
                      random_id=random.randint(0, 2 ** 64))
     vk.messages.send(user_id=id, message="Введите сумму(мин. = 100): ", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            response = event.obj.message['text']
-            if str(response).isdigit():
-                _sum = int(response)
-                user.money -= _sum
-                break
-            elif response == 'Вернуться назад':
-                return kasino(user_id, id)
-            else:
-                vk.messages.send(user_id=id, message="Сумма меньше 100!\nВведите больше:", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-    session.commit()
-    right = random.randint(1, 3)
-    keyboard = create_keyboard('ugodaika')
-    vk.messages.send(user_id=id, message="Угадай цифру!", keyboard=keyboard,
-                     random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            response = event.obj.message['text']
-            try:
-                if response == 'Вернуться назад':
-                    log(event.obj.message['from_id'], event.obj.message['text'])
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                response = event.obj.message['text']
+                if str(response).isdigit():
+                    _sum = int(response)
+                    user.money -= _sum
+                    break
+                elif response == 'Вернуться назад':
                     return kasino(user_id, id)
-                elif int(response) == right:
-                    vk.messages.send(user_id=id, message=f"Правильно, ты заработал {math.ceil(_sum * 1.5)} руб.",
-                                     keyboard=keyboard,
-                                     random_id=random.randint(0, 2 ** 64))
-                    user.money += math.ceil(_sum * 1.5)
-                    session.commit()
-                    return ugodaika(user_id, id)
                 else:
-                    vk.messages.send(user_id=id, message=f"Неправильно! Правильно: {right}",
+                    vk.messages.send(user_id=id, message="Сумма меньше 100!\nВведите больше:", keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+        session.commit()
+        right = random.randint(1, 3)
+        keyboard = create_keyboard('ugodaika')
+        vk.messages.send(user_id=id, message="Угадай цифру!", keyboard=keyboard,
+                         random_id=random.randint(0, 2 ** 64))
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                response = event.obj.message['text']
+                try:
+                    if response == 'Вернуться назад':
+                        log(event.obj.message['from_id'], event.obj.message['text'])
+                        return kasino(user_id, id)
+                    elif int(response) == right:
+                        vk.messages.send(user_id=id, message=f"Правильно, ты заработал {math.ceil(_sum * 1.5)} руб.",
+                                         keyboard=keyboard,
+                                         random_id=random.randint(0, 2 ** 64))
+                        user.money += math.ceil(_sum * 1.5)
+                        session.commit()
+                        return ugodaika(user_id, id)
+                    else:
+                        vk.messages.send(user_id=id, message=f"Неправильно! Правильно: {right}",
+                                         random_id=random.randint(0, 2 ** 64))
+                        return ugodaika(user_id, id)
+                except Exception:
+                    vk.messages.send(user_id=id, message="Неправильно!",
                                      random_id=random.randint(0, 2 ** 64))
                     return ugodaika(user_id, id)
-            except Exception:
-                vk.messages.send(user_id=id, message="Неправильно!",
-                                 random_id=random.randint(0, 2 ** 64))
-                return ugodaika(user_id, id)
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
 def kasino(user_id, id):
@@ -724,70 +764,83 @@ def kasino(user_id, id):
     keyboard = create_keyboard('kazino')
     vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            response = event.obj.message['text']
-            if response == 'Мой счёт':
-                log(event.obj.message['from_id'], event.obj.message['text'])
-                vk.messages.send(user_id=id, message=f"На данный момент ваш счёт составляет: {user.money}",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-            elif response == 'Угодайка':
-                log(event.obj.message['from_id'], event.obj.message['text'])
-                return ugodaika(user_id, id)
-            elif response == 'Вернуться назад':
-                log(event.obj.message['from_id'], event.obj.message['text'])
-                return game_process(user_id, id)
-            else:
-                vk.messages.send(user_id=id, message="Такой функции нет.", keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                response = event.obj.message['text']
+                if response == 'Мой счёт':
+                    log(event.obj.message['from_id'], event.obj.message['text'])
+                    vk.messages.send(user_id=id, message=f"На данный момент ваш счёт составляет: {user.money}",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+                elif response == 'Угодайка':
+                    log(event.obj.message['from_id'], event.obj.message['text'])
+                    return ugodaika(user_id, id)
+                elif response == 'Вернуться назад':
+                    log(event.obj.message['from_id'], event.obj.message['text'])
+                    return game_process(user_id, id)
+                else:
+                    vk.messages.send(user_id=id, message="Такой функции нет.", keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return enter(id)
 
 
-def game_process(user_id, id):
+def game_process(user_id, id, rerun=False):
+    if rerun:
+        print('Робит')
     vk = vk_session.get_api()
     keyboard = create_keyboard('main_menu')
     vk.messages.send(user_id=id, message="Выбирай", keyboard=keyboard,
                      random_id=random.randint(0, 2 ** 64))
     session = db_session.create_session()
     user = session.query(User).filter(User.id == user_id).first()
-    for event in longpoll.listen():
-        if event.type == VkBotEventType.MESSAGE_NEW:
-            log(event.obj.message['from_id'], event.obj.message['text'])
-            message = event.obj.message['text']
-            if message == 'Обо мне':
-                session = db_session.create_session()
-                user = session.query(User).filter(User.id == user_id).first()
-                cars = ', '.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[
-                                                                               0] == 'True' else 'нет'
-                vk.messages.send(user_id=id,
-                                 message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}"
-                                         f"\nВаша почта: {user.email}\nУ вас: {user.money} рублей"
-                                         f"\nВы работаете: {user.profession.split(';')[1] if user.profession.split(';')[0] == 'True' else 'никем'}\nВы получаете: {user.zarplata} рублей"
-                                         f"\nВаш дом: {user.home.split(';')[1] if user.home.split(';')[0] == 'True' else 'нет'}"
-                                         f"\nВаш гараж: {user.garage.split(';')[1] if user.garage.split(';')[0] == 'True' else 'нет'}"
-                                         f"\nВаши машины: {cars}"
-                                         f"\nВаше образование: {user.education}",
-                                 keyboard=keyboard,
-                                 random_id=random.randint(0, 2 ** 64))
-            elif message == 'Выход':
-                user.enter = 'False'
-                session.commit()
-                return main(-1, id)
-            elif message == 'Образование':
-                education(id, user_id)
-            elif message == 'Kasino':
-                kasino(user_id, id)
-            elif message == 'Работа':
-                body_job(user_id, id)
-            elif message == 'БАНК':
-                bank(user_id, id)
-            elif user.role == 'admin' and message == 'ADMIN':
-                pass
-            else:
-                vk.messages.send(user_id=event.obj.message['from_id'],
-                                 message="Такой команды пока нет.",
-                                 random_id=random.randint(0, 2 ** 64))
+    try:
+        for event in longpoll.listen():
+            if event.type == VkBotEventType.MESSAGE_NEW:
+                log(event.obj.message['from_id'], event.obj.message['text'])
+                message = event.obj.message['text']
+                if message == 'Обо мне':
+                    session = db_session.create_session()
+                    user = session.query(User).filter(User.id == user_id).first()
+                    cars = ', '.join(user.garage.split(';')[1].split(', ')) if user.garage.split(';')[
+                                                                                   0] == 'True' else 'нет'
+                    vk.messages.send(user_id=id,
+                                     message=f"Ваше имя: {user.name}\nВаша фамилия: {user.surname}"
+                                             f"\nВаша почта: {user.email}\nУ вас: {user.money} рублей"
+                                             f"\nВы работаете: {user.profession.split(';')[1] if user.profession.split(';')[0] == 'True' else 'никем'}\nВы получаете: {user.zarplata} рублей"
+                                             f"\nВаш дом: {user.home.split(';')[1] if user.home.split(';')[0] == 'True' else 'нет'}"
+                                             f"\nВаш гараж: {user.garage.split(';')[1] if user.garage.split(';')[0] == 'True' else 'нет'}"
+                                             f"\nВаши машины: {cars}"
+                                             f"\nВаше образование: {user.education}",
+                                     keyboard=keyboard,
+                                     random_id=random.randint(0, 2 ** 64))
+                elif message == 'Выход':
+                    user.enter = 'False'
+                    session.commit()
+                    return main(-1, id)
+                elif message == 'Образование':
+                    education(id, user_id)
+                elif message == 'Kasino':
+                    kasino(user_id, id)
+                elif message == 'Работа':
+                    body_job(user_id, id)
+                elif message == 'БАНК':
+                    bank(user_id, id)
+                elif user.role == 'admin' and message == 'ADMIN':
+                    pass
+                else:
+                    vk.messages.send(user_id=event.obj.message['from_id'],
+                                     message="Такой команды пока нет.",
+                                     random_id=random.randint(0, 2 ** 64))
+    except Exception:
+        print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
+        return game_process(user_id, id, True)
 
 
 if __name__ == '__main__':
-    main(0)
+    try:
+        main(0)
+    except Exception:
+        print('\033[35mОшибка, мы не смогли решить её\033[0m')
