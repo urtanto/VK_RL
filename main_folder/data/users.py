@@ -9,12 +9,6 @@ class User(SqlAlchemyBase, UserMixin):
     id = sqlalchemy.Column(sqlalchemy.Integer,
                            primary_key=True, autoincrement=True)
     vk = sqlalchemy.Column(sqlalchemy.Integer, unique=True)
-    surname = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    name = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    enter = sqlalchemy.Column(sqlalchemy.String, nullable=True)
-    email = sqlalchemy.Column(sqlalchemy.String,
-                              index=True, unique=True, nullable=True)
-    password = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     money = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
     profession = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     zarplata = sqlalchemy.Column(sqlalchemy.Integer, nullable=True)
@@ -25,3 +19,7 @@ class User(SqlAlchemyBase, UserMixin):
     last_date = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     ban = sqlalchemy.Column(sqlalchemy.String, nullable=True)
     role = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    working = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    learning = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    keyboard = sqlalchemy.Column(sqlalchemy.String, nullable=True)
+    now = sqlalchemy.Column(sqlalchemy.String, nullable=True)
