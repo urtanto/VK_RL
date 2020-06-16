@@ -107,12 +107,12 @@ def log(id, text, friend_id=None, give=False, sum=0):
         session = db_session.create_session()
         user = session.query(User).filter(User.vk == id).first()
         print(
-            f'time: {datetime.datetime.now()} vk_id: {id}; text: {text}; allowed: {"True" if user.role == "admin" else "False"}')
+            f'time: \033[33m{datetime.datetime.now()}\033[0m vk_id: \033[35m{id}\033[0m; text: {text}; allowed: {"True" if user.role == "admin" else "False"}')
     elif text == 'Перевод':
         print(
-            f'time: {datetime.datetime.now()} Remittances from: {id} to: {friend_id} summa: {sum} heppen: {"YES" if give else "NO"}')
+            f'time: \033[33m{datetime.datetime.now()}\033[0m Remittances from: {id} to: {friend_id} summa: {sum} heppen: {"YES" if give else "NO"}')
     else:
-        print(f'time: {datetime.datetime.now()} vk_id: {id}; text: {text}')
+        print(f'time: \033[33m{datetime.datetime.now()}\033[0m vk_id: \033[35m{id}\033[0m; text: {text}')
 
 
 def create_keyboard(text):
@@ -173,17 +173,12 @@ def money_earn(id):
 
 
 def enter(id):
-    print(1)
     session = db_session.create_session()
-    print(2)
-    user = session.query(User).filter(str(User.vk) == str(id)).first()
-    print(3)
+    user = session.query(User).filter(User.vk == id).first()
     if user.enter == 'True':
-        print('1')
         money_earn(id)
         game_process(user.id, id)
     else:
-        print('2')
         keyboard = create_keyboard('вход')
         vk = vk_session.get_api()
         vk.messages.send(user_id=id, message="Введите почту:", keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
@@ -341,6 +336,7 @@ def register(id):
     user.vk = id
     user.ban = 'False'
     user.role = 'user'
+    user.last_date = datetime.date.today()
     try:
         session.add(user)
         session.commit()
@@ -361,7 +357,7 @@ def main(*func):
         vk.messages.send(user_id=func[1], message="Привет",
                          keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
     elif func[0] == 0 and len(func) == 1:
-        print('Robit')
+        print(f' Robit time: \033[33m{datetime.datetime.now()}\033[0m')
     elif func[0] == 0 and len(func) == 2:
         keyboard = create_keyboard('login')
         vk.messages.send(user_id=func[1], message="Привет",
@@ -394,8 +390,7 @@ def main(*func):
                         vk.messages.send(user_id=event.obj.message['from_id'],
                                          message="Такой команды нет, попробуй снова.",
                                          keyboard=keyboard, random_id=random.randint(0, 2 ** 64))
-                    if event.obj.message['from_id'] in [463771138, 220401042] and response == 'ADMIN':
-                        pass
+
     except Exception:
         print('\033[31mОшибка, пытаемся перезапуститься...\033[0m')
         return main(0)
